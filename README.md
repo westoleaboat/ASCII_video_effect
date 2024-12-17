@@ -1,22 +1,19 @@
-<<<<<<< HEAD
-# ASCII_video_effect
-processes a video file to generate an ASCII art-styled version of the video. 
-=======
-```
-              _    ___     __              ___   _____ ______________   ___         __ 
-             | |  / (_)___/ /__  ____     /   | / ___// ____/  _/  _/  /   |  _____/ /_
-             | | / / / __  / _ \/ __ \   / /| | \__ \/ /    / / / /   / /| | / ___/ __/
-             | |/ / / /_/ /  __/ /_/ /  / ___ |___/ / /____/ /_/ /   / ___ |/ /  / /_  
-             |___/_/\__,_/\___/\____/  /_/  |_/____/\____/___/___/  /_/  |_/_/   \__/  
-                                                                          
 
-                         ┏┓┏┓┏┓┳┳             ┓   ┓         •        ┏            ┏           
-        ┏┓┏┓┏┓┏┓┏┓┏┓╋┏┓  ┣┫┗┓┃ ┃┃  ┏┓┏┓╋━━┏╋┓┏┃┏┓┏┫  ┓┏┏┓┏┓┏┓┏┓┏┓  ┏┓╋  ┓┏┏┓┓┏┏┓  ╋┏┓┏┓┏┳┓┏┓┏ 
-        ┗┫┗ ┛┗┗ ┛ ┗┻┗┗   ┛┗┗┛┗┛┻┻  ┗┻┛ ┗  ┛┗┗┫┗┗ ┗┻  ┗┛┗ ┛ ┛┗┗┛┛┗  ┗┛┛  ┗┫┗┛┗┻┛   ┛┛ ┗┻┛┗┗┗ ┛•
-         ┛                                   ┛                           ┛                    
+```
+         _    ___     __              ___   _____ ______________   ___         __ 
+        | |  / (_)___/ /__  ____     /   | / ___// ____/  _/  _/  /   |  _____/ /_
+        | | / / / __  / _ \/ __ \   / /| | \__ \/ /    / / / /   / /| | / ___/ __/
+        | |/ / / /_/ /  __/ /_/ /  / ___ |___/ / /____/ /_/ /   / ___ |/ /  / /_  
+        |___/_/\__,_/\___/\____/  /_/  |_/____/\____/___/___/  /_/  |_/_/   \__/  
+                                                                    
+                    ┏┓┏┓┏┓┳┳             ┓   ┓         •        ┏            ┏           
+   ┏┓┏┓┏┓┏┓┏┓┏┓╋┏┓  ┣┫┗┓┃ ┃┃  ┏┓┏┓╋━━┏╋┓┏┃┏┓┏┫  ┓┏┏┓┏┓┏┓┏┓┏┓  ┏┓╋  ┓┏┏┓┓┏┏┓  ╋┏┓┏┓┏┳┓┏┓┏ 
+   ┗┫┗ ┛┗┗ ┛ ┗┻┗┗   ┛┗┗┛┗┛┻┻  ┗┻┛ ┗  ┛┗┗┫┗┗ ┗┻  ┗┛┗ ┛ ┛┗┗┛┛┗  ┗┛┛  ┗┫┗┛┗┻┛   ┛┛ ┗┻┛┗┗┗ ┛•
+    ┛                                   ┛                           ┛                    
 
 ```
 
+![sample](torus4.gif)
 
 ### How to Run:
     $ python main.py --video /path/to/video.mp4 --output_folder /path/to/folder --cols 120 --fps 10 --scale 0.55 --more_levels
@@ -37,4 +34,4 @@ processes a video file to generate an ASCII art-styled version of the video.
 ### Notes:
 - The script creates temporary folders for storing intermediate frames and ASCII-converted frames.
 - Adjust the `cols` and `scale` parameters to control the resolution of the ASCII art. (higher cols = longer rendering time)
->>>>>>> de8acc0 ((ADD) main file, gif, update Readme)
+
