@@ -5,14 +5,9 @@ import time
 
 # Grayscale scales
 gscale1 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/|()1{}[]?-_+~<>i!lI;:,\"^`'. "
-gscale2 = '@%#*+=-:. '
+gscale2 = "@%#*+=-:. "
 
-def get_average_l(image):
-    """Calculate the average brightness of an image."""
-    im = np.array(image)
-    return np.average(im)
-
-def frame_to_ascii(image, cols=120, scale=0.5, more_levels=False):
+def frame_to_ascii(image, cols=90, scale=0.4, more_levels=False):
     """Convert a single frame to ASCII."""
     font = ImageFont.load_default()
     char_width, char_height = font.getbbox("A")[2], font.getbbox("A")[3]
@@ -30,20 +25,21 @@ def frame_to_ascii(image, cols=120, scale=0.5, more_levels=False):
     if cols > W or rows > H:
         raise ValueError("Image resolution is too low for the specified cols.")
 
-    # Create ASCII art
-    ascii_image = []
+    # Reshape image into tiles
+    tile_rows = np.linspace(0, H, rows + 1, dtype=int)
+    tile_cols = np.linspace(0, W, cols + 1, dtype=int)
+
+    # Calculate brightness for each tile
+    brightness = np.zeros((rows, cols), dtype=np.float32)
     for j in range(rows):
-        y1 = int(j * tile_height)
-        y2 = int((j + 1) * tile_height) if j != rows - 1 else H
-        ascii_image.append("")
         for i in range(cols):
-            x1 = int(i * tile_width)
-            x2 = int((i + 1) * tile_width) if i != cols - 1 else W
-            tile = image[y1:y2, x1:x2]
-            avg = int(get_average_l(tile))
-            gsval = gscale1[min(int((avg * 69) / 255), len(gscale1) - 1)] if more_levels else \
-                    gscale2[min(int((avg * 9) / 255), len(gscale2) - 1)]
-            ascii_image[j] += gsval
+            tile = image[tile_rows[j]:tile_rows[j + 1], tile_cols[i]:tile_cols[i + 1]]
+            brightness[j, i] = tile.mean()
+
+    # Map brightness to ASCII characters
+    scale_map = gscale1 if more_levels else gscale2
+    char_map = np.vectorize(lambda x: scale_map[min(int((x * len(scale_map)) / 255), len(scale_map) - 1)])
+    ascii_array = char_map(brightness)
 
     # Convert ASCII art back to an image
     img_width = char_width * cols
@@ -51,8 +47,8 @@ def frame_to_ascii(image, cols=120, scale=0.5, more_levels=False):
     ascii_img = Image.new("L", (img_width, img_height), 255)
     draw = ImageDraw.Draw(ascii_img)
 
-    for j, row in enumerate(ascii_image):
-        draw.text((0, j * char_height), row, fill=0, font=font)
+    for j, row in enumerate(ascii_array):
+        draw.text((0, j * char_height), "".join(row), fill=0, font=font)
 
     return np.array(ascii_img)
 
@@ -66,7 +62,7 @@ def main():
 
     # Set desired output resolution (adjust for performance)
     cols = 90
-    scale = 0.8
+    scale = 0.4
     more_levels = False
 
     print("Press 'q' to quit.")

@@ -48,7 +48,7 @@ $ python ascii_real_time.py
 ```
 ![real_feed](live_feed.gif)
 
-### Improve
+### TODO
 1. Robust Error Handling
     - Detect Issues with Input Video:
         - [ ] Validate the input video path and format.
@@ -63,11 +63,11 @@ $ python ascii_real_time.py
         - [ ] Ensure temp folders and files are deleted after processing, even if errors when running.
 
 2. Improve Performance
-    - [ ] Parallel Processing
-    - [ ] Batch File I/O
-    - [ ] GPU Acceleration
+    - [ ] Batch File I/O.
+    - [x] Using NumPy to reduce processing time by vectorizing in bulk, precomputing constants and avoid cropping.
 
 3. Customization 
     - [ ] Dynamic Resolution Scaling: adjust `cols` and `scale` based on resolution of the input video.
     - [ ] Aspect Ratio Correction: handle input videos with non-standard aspect ratios (e.g., cropping or padding).
+
 

@@ -2,13 +2,25 @@
 ASCII Art Video Converter
 
 ### How to Run:
-    $ python3 ascii_video_effect.py --video /path/to/video.mp4 --output_folder /path/to/folder --cols 120 --fps 10 --scale 0.55 --more_levels
+    $ python3 main.py --video /path/to/video.mp4 --output_folder /path/to/folder --cols 120 --fps 10 --scale 0.55 --more_levels
 
 ### Test:
     $ python -m unittest discover -s tests
 
-"""
+### Profiling line by line (for optimization)
 
+    - uncomment imports
+    - add decorator @line_profiler.profile to the function you want to analyze.
+    
+    - option 1: Add LINE_PROFILE=1 and run script as normal.
+        $ LINE_PROFILE=1 python3 main.py --video /path/to/video.mp4 --output_folder /path/to/folder --cols 120 --fps 10 --scale 0.55 --more_levels
+
+    - option 2: The kernprof.py script will produce an output file and print the result of the profiling on the standard output.
+        $ kernprof -l -v main.py --video /path/to/video.mp4 --output_folder /path/to/folder --cols 120 --fps 10 --scale 0.55 --more_levels
+
+    To view details run:
+    python -m line_profiler -rtmz main.py.lprof
+"""
 
 import os
 import sys
@@ -17,6 +29,9 @@ import argparse
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from datetime import timedelta
+
+# import line_profiler                  
+# from line_profiler import profile
 
 # Grayscale scales
 gscale1 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/|()1{}[]?-_+~<>i!lI;:,\"^`'. "
@@ -67,14 +82,62 @@ def extract_frames(video_path, output_folder, fps):
         count += 1
 
     cap.release()
-    print(f"Frames extracted to {output_folder}")
+    print(f"Frames extracted to {output_folder}\n")
 
 def getAverageL(image):
     """Return average brightness value of an image."""
-    im = np.array(image)
-    return np.average(im)
+    return np.mean(image)
 
-def apply_ascii_effect(input_folder, output_folder, cols, scale, more_levels):
+# @line_profiler.profile
+def frame_to_ascii(image, cols, scale, more_levels):
+    """Convert a single frame to ASCII."""
+    font = ImageFont.load_default()
+    char_width, char_height = font.getbbox("A")[2], font.getbbox("A")[3]
+
+    # Convert to grayscale
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    H, W = image.shape
+
+    # Compute tile dimensions
+    tile_width = W / cols
+    tile_height = tile_width / scale
+    rows = int(H / tile_height)
+
+    # Check for invalid cols or rows
+    if cols > W or rows > H:
+        raise ValueError("Image resolution is too low for the specified cols.")
+
+    # Pre-compute brightness to ASCII mapping
+    scale_map = gscale1 if more_levels else gscale2
+    brightness_to_char = np.array([scale_map[min(int((i * len(scale_map)) / 255), len(scale_map) - 1)] for i in range(256)])
+
+    # Create grid for tiles
+    tile_rows = np.linspace(0, H, rows + 1, dtype=int)
+    tile_cols = np.linspace(0, W, cols + 1, dtype=int)
+
+    # Calculate brightness for each tile in bulk
+    ascii_image = []
+    for j in range(rows):
+        row_tiles = [
+            brightness_to_char[int(image[tile_rows[j]:tile_rows[j + 1], tile_cols[i]:tile_cols[i + 1]].mean())]
+            for i in range(cols)
+        ]
+        ascii_image.append("".join(row_tiles))
+
+    # Convert ASCII art back to an image
+    img_width = char_width * cols
+    img_height = char_height * rows
+    ascii_img = Image.new("L", (img_width, img_height), 255)
+    draw = ImageDraw.Draw(ascii_img)
+
+    for j, row in enumerate(ascii_image):
+        draw.text((0, j * char_height), row, fill=0, font=font)
+
+    return ascii_img
+
+
+# @line_profiler.profile
+def apply_ascii_effect(input_folder, output_folder, cols=120, scale=0.5, more_levels=False):
     """Apply ASCII effect to all frames in the input folder."""
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -88,42 +151,18 @@ def apply_ascii_effect(input_folder, output_folder, cols, scale, more_levels):
     char_width, char_height = font.getbbox("A")[2], font.getbbox("A")[3]
 
     for index, filename in enumerate(files):
-        print(f"\rApplying ASCII effect to frame {index + 1}/{len(files)}: {filename}", end="")
-        image = Image.open(os.path.join(input_folder, filename)).convert('L')
-        W, H = image.size
-        w = W / cols
-        h = w / scale
-        rows = int(H / h)
+        print(f"\rProcessing frame {index + 1}/{len(files)}: {filename}", end="")
 
-        if cols > W or rows > H:
-            print(f"Frame {filename} too small for the specified cols.")
-            continue
+        # Load and process image
+        image = cv2.imread(os.path.join(input_folder, filename))
+        ascii_img = frame_to_ascii(image, cols, scale, more_levels)
 
-        aimg = []
-        for j in range(rows):
-            y1 = int(j * h)
-            y2 = int((j + 1) * h) if j != rows - 1 else H
-            aimg.append("")
-            for i in range(cols):
-                x1 = int(i * w)
-                x2 = int((i + 1) * w) if i != cols - 1 else W
-                img = image.crop((x1, y1, x2, y2))
-                avg = int(getAverageL(img))
-                # gsval = gscale1[int((avg * 69) / 255)] if more_levels else gscale2[int((avg * 9) / 255)]
-                gsval = gscale1[min(int((avg * 69) / 255), len(gscale1) - 1)] if more_levels else gscale2[min(int((avg * 9) / 255), len(gscale2) - 1)]
-                aimg[j] += gsval
-
-        img_width = char_width * cols
-        img_height = char_height * rows
-        ascii_img = Image.new("L", (img_width, img_height), 255)
-        draw = ImageDraw.Draw(ascii_img)
-
-        for j, row in enumerate(aimg):
-            draw.text((0, j * char_height), row, fill=0, font=font)
-
+        # Save ASCII frame as an image
         output_path = os.path.join(output_folder, f"ascii_frame_{index + 1:04d}.png")
         ascii_img.save(output_path)
+
     print("\nASCII effect applied to all frames.")
+
 
 def create_video_from_frames(input_folder, output_path, fps):
     """Create a video from frames."""
